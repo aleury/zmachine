@@ -42,40 +42,32 @@ const Token = union(enum) {
 const Lexer = struct {
     input: []const u8,
     pos: usize,
-    nextPos: usize,
+    next_pos: usize,
     char: u8,
 
     fn init(input: []const u8) Lexer {
         return Lexer{
             .input = input,
             .pos = 0,
-            .nextPos = 1,
+            .next_pos = 1,
             .char = input[0],
         };
     }
 };
 
-fn nextToken(lexer: *Lexer) !Token {
-    skipWhitespace(lexer);
+fn next_token(lexer: *Lexer) !Token {
+    skip_whitespace(lexer);
     switch (lexer.char) {
         ',' => {
-            readChar(lexer);
+            read_char(lexer);
             return Token.comma;
         },
         'a'...'z' => {
-            const start = lexer.pos;
-            while (std.ascii.isAlphanumeric(lexer.char)) {
-                readChar(lexer);
-            }
-            return lookupIdentifier(lexer.input[start..lexer.pos]);
+            const ident = read_identifier(lexer);
+            return lookup_identifier(ident);
         },
         '0'...'9' => {
-            const start = lexer.pos;
-            while (std.ascii.isDigit(lexer.char)) {
-                readChar(lexer);
-            }
-            const str = lexer.input[start..lexer.pos];
-            const value = try std.fmt.parseUnsigned(u32, str, 10);
+            const value = try read_number(lexer);
             return Token{ .number = value };
         },
         0 => return Token.eof,
@@ -83,7 +75,7 @@ fn nextToken(lexer: *Lexer) !Token {
     }
 }
 
-fn lookupIdentifier(ident: []const u8) Token {
+fn lookup_identifier(ident: []const u8) Token {
     const map = std.StaticStringMap(Token).initComptime(.{
         .{ "a0", Token{ .register = Reg.a0 } },
         .{ "li", Token{ .opcode = "li" } },
@@ -91,22 +83,47 @@ fn lookupIdentifier(ident: []const u8) Token {
     return map.get(ident) orelse Token{ .ident = ident };
 }
 
-fn readChar(lexer: *Lexer) void {
-    lexer.char = peekChar(lexer);
-    lexer.pos = lexer.nextPos;
-    lexer.nextPos += 1;
+fn read_number(lexer: *Lexer) !u32 {
+    const start = lexer.pos;
+    while (is_digit(lexer.char)) {
+        read_char(lexer);
+    }
+    const str = lexer.input[start..lexer.pos];
+    return try std.fmt.parseUnsigned(u32, str, 10);
 }
 
-fn peekChar(lexer: *Lexer) u8 {
-    if (lexer.nextPos >= lexer.input.len) {
+fn read_identifier(lexer: *Lexer) []const u8 {
+    const start = lexer.pos;
+    while (is_alphanumeric(lexer.char)) {
+        read_char(lexer);
+    }
+    return lexer.input[start..lexer.pos];
+}
+
+fn read_char(lexer: *Lexer) void {
+    lexer.char = peek_char(lexer);
+    lexer.pos = lexer.next_pos;
+    lexer.next_pos += 1;
+}
+
+fn peek_char(lexer: *Lexer) u8 {
+    if (lexer.next_pos >= lexer.input.len) {
         return 0;
     }
-    return lexer.input[lexer.nextPos];
+    return lexer.input[lexer.next_pos];
 }
 
-fn skipWhitespace(lexer: *Lexer) void {
+fn is_digit(c: u8) bool {
+    return std.ascii.isDigit(c);
+}
+
+fn is_alphanumeric(c: u8) bool {
+    return std.ascii.isAlphanumeric(c);
+}
+
+fn skip_whitespace(lexer: *Lexer) void {
     while (std.ascii.isWhitespace(lexer.char)) {
-        readChar(lexer);
+        read_char(lexer);
     }
 }
 
@@ -121,10 +138,10 @@ test "lexer tokenizes 'li a0, 1'" {
     };
 
     var lexer = Lexer.init(input);
-    var tokens: [expected.len]Token = undefined;
 
-    for (0..tokens.len) |i| {
-        tokens[i] = try nextToken(&lexer);
+    var tokens: [expected.len]Token = undefined;
+    for (&tokens) |*token| {
+        token.* = try next_token(&lexer);
     }
 
     try expectEqualSlices(Token, &expected, &tokens);
