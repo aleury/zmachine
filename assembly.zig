@@ -55,27 +55,27 @@ const Lexer = struct {
     }
 };
 
-fn nextToken(lex: *Lexer) !Token {
+fn nextToken(lexer: *Lexer) !Token {
     while (true) {
-        skipWhitespace(lex);
-        switch (lex.char) {
+        skipWhitespace(lexer);
+        switch (lexer.char) {
             ',' => {
-                readChar(lex);
+                readChar(lexer);
                 return Token.comma;
             },
             'a'...'z' => {
-                const start = lex.pos;
-                while (std.ascii.isAlphanumeric(lex.char)) {
-                    readChar(lex);
+                const start = lexer.pos;
+                while (std.ascii.isAlphanumeric(lexer.char)) {
+                    readChar(lexer);
                 }
-                return lookupIdentifier(lex.input[start..lex.pos]);
+                return lookupIdentifier(lexer.input[start..lexer.pos]);
             },
             '0'...'9' => {
-                const start = lex.pos;
-                while (std.ascii.isDigit(lex.char)) {
-                    readChar(lex);
+                const start = lexer.pos;
+                while (std.ascii.isDigit(lexer.char)) {
+                    readChar(lexer);
                 }
-                const str = lex.input[start..lex.pos];
+                const str = lexer.input[start..lexer.pos];
                 const value = try std.fmt.parseUnsigned(u32, str, 10);
                 return Token{ .number = value };
             },
@@ -91,22 +91,22 @@ fn lookupIdentifier(ident: []const u8) Token {
     return Token{ .ident = ident };
 }
 
-fn readChar(lex: *Lexer) void {
-    lex.char = peekChar(lex);
-    lex.pos = lex.nextPos;
-    lex.nextPos += 1;
+fn readChar(lexer: *Lexer) void {
+    lexer.char = peekChar(lexer);
+    lexer.pos = lexer.nextPos;
+    lexer.nextPos += 1;
 }
 
-fn peekChar(lex: *Lexer) u8 {
-    if (lex.nextPos >= lex.input.len) {
+fn peekChar(lexer: *Lexer) u8 {
+    if (lexer.nextPos >= lexer.input.len) {
         return 0;
     }
-    return lex.input[lex.nextPos];
+    return lexer.input[lexer.nextPos];
 }
 
-fn skipWhitespace(lex: *Lexer) void {
-    while (std.ascii.isWhitespace(lex.char)) {
-        readChar(lex);
+fn skipWhitespace(lexer: *Lexer) void {
+    while (std.ascii.isWhitespace(lexer.char)) {
+        readChar(lexer);
     }
 }
 
