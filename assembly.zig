@@ -80,9 +80,7 @@ fn nextToken(lex: *Lexer) !Token {
                 return Token{ .number = value };
             },
             0 => return Token.eof,
-            else => {
-                return Token.illegal;
-            },
+            else => return Token.illegal,
         }
     }
 }
