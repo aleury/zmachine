@@ -56,32 +56,30 @@ const Lexer = struct {
 };
 
 fn nextToken(lexer: *Lexer) !Token {
-    while (true) {
-        skipWhitespace(lexer);
-        switch (lexer.char) {
-            ',' => {
+    skipWhitespace(lexer);
+    switch (lexer.char) {
+        ',' => {
+            readChar(lexer);
+            return Token.comma;
+        },
+        'a'...'z' => {
+            const start = lexer.pos;
+            while (std.ascii.isAlphanumeric(lexer.char)) {
                 readChar(lexer);
-                return Token.comma;
-            },
-            'a'...'z' => {
-                const start = lexer.pos;
-                while (std.ascii.isAlphanumeric(lexer.char)) {
-                    readChar(lexer);
-                }
-                return lookupIdentifier(lexer.input[start..lexer.pos]);
-            },
-            '0'...'9' => {
-                const start = lexer.pos;
-                while (std.ascii.isDigit(lexer.char)) {
-                    readChar(lexer);
-                }
-                const str = lexer.input[start..lexer.pos];
-                const value = try std.fmt.parseUnsigned(u32, str, 10);
-                return Token{ .number = value };
-            },
-            0 => return Token.eof,
-            else => return Token.illegal,
-        }
+            }
+            return lookupIdentifier(lexer.input[start..lexer.pos]);
+        },
+        '0'...'9' => {
+            const start = lexer.pos;
+            while (std.ascii.isDigit(lexer.char)) {
+                readChar(lexer);
+            }
+            const str = lexer.input[start..lexer.pos];
+            const value = try std.fmt.parseUnsigned(u32, str, 10);
+            return Token{ .number = value };
+        },
+        0 => return Token.eof,
+        else => return Token.illegal,
     }
 }
 
