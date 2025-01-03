@@ -84,9 +84,11 @@ fn nextToken(lexer: *Lexer) !Token {
 }
 
 fn lookupIdentifier(ident: []const u8) Token {
-    if (std.mem.eql(u8, ident, "a0")) return Token{ .register = Reg.a0 };
-    if (std.mem.eql(u8, ident, "li")) return Token{ .opcode = "li" };
-    return Token{ .ident = ident };
+    const map = std.StaticStringMap(Token).initComptime(.{
+        .{ "a0", Token{ .register = Reg.a0 } },
+        .{ "li", Token{ .opcode = "li" } },
+    });
+    return map.get(ident) orelse Token{ .ident = ident };
 }
 
 fn readChar(lexer: *Lexer) void {
