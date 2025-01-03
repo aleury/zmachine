@@ -57,7 +57,7 @@ const Lexer = struct {
 
 fn nextToken(lex: *Lexer) !Token {
     while (true) {
-        skip_whitespace(lex);
+        skipWhitespace(lex);
         switch (lex.char) {
             ',' => {
                 readChar(lex);
@@ -106,7 +106,7 @@ fn peekChar(lex: *Lexer) u8 {
     return lex.input[lex.nextPos];
 }
 
-fn skip_whitespace(lex: *Lexer) void {
+fn skipWhitespace(lex: *Lexer) void {
     while (std.ascii.isWhitespace(lex.char)) {
         readChar(lex);
     }
